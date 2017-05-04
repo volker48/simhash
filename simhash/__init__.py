@@ -6,7 +6,6 @@ import re
 import hashlib
 import logging
 import collections
-from itertools import groupby
 
 if sys.version_info[0] >= 3:
     basestring = str
@@ -56,7 +55,7 @@ class Simhash(object):
             raise Exception('Bad parameter with type {}'.format(type(value)))
 
     def _slide(self, content, width=4):
-        return [content[i:i + width] for i in range(max(len(content) - width + 1, 1))]
+        return (content[i:i + width] for i in range(max(len(content) - width + 1, 1)))
 
     def _tokenize(self, content):
         content = content.lower()
@@ -66,8 +65,10 @@ class Simhash(object):
 
     def build_by_text(self, content):
         features = self._tokenize(content)
-        features = {k:sum(1 for _ in g) for k, g in groupby(sorted(features))}
-        return self.build_by_features(features)
+        counts = collections.Counter()
+        for ngram in features:
+            counts[ngram] += 1
+        return self.build_by_features(counts)
 
     def build_by_features(self, features):
         """
